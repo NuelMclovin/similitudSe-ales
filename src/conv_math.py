@@ -147,3 +147,4 @@ def correlacion_discreta_audio(audio1: np.ndarray, audio2: np.ndarray):
     similitud_max = np.max(correlacion)
     
     return lags, correlacion, similitud_max
+
