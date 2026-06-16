@@ -10,7 +10,11 @@ from src.utils import cargar_y_normalizar, alinear_tamanos
 from src.fourier_math import coeficientes_serie_discreta_audio
 from src.Transformada_fourier_math import espectro_fft_audio
 from src.conv_math import correlacion_discreta_audio
+
 from gui.visualizaciones import PanelVisualizaciones
+
+from gui.tab_detector import TabDetector
+import config
 
 
 class AnalizadorAudioApp:
@@ -29,7 +33,7 @@ class AnalizadorAudioApp:
         self.cargar_datos(ruta_real, ruta_ia)
         self.construir_interfaz()
 
-
+    # ── Carga de datos (sin cambios) ──────────────────────────────────────────
 
     def cargar_datos(self, r_real: Path, r_ia: Path):
         if not r_real.exists() or not r_ia.exists():
@@ -85,7 +89,6 @@ class AnalizadorAudioApp:
         self.prom_mag_ia /= self.num_ventanas
 
 
-
     def construir_interfaz(self):
         self.notebook = ttk.Notebook(self.root)
         self.notebook.pack(fill=tk.BOTH, expand=True, padx=10, pady=10)
@@ -93,19 +96,21 @@ class AnalizadorAudioApp:
         self.tab_global     = ttk.Frame(self.notebook)
         self.tab_individual = ttk.Frame(self.notebook)
         self.tab_tabla      = ttk.Frame(self.notebook)
-        self.tab_dashboard  = ttk.Frame(self.notebook)  
+        self.tab_dashboard  = ttk.Frame(self.notebook)
+        self.tab_detector   = ttk.Frame(self.notebook)  
 
         self.notebook.add(self.tab_global,     text="1. Dashboard Comparativo Global")
         self.notebook.add(self.tab_individual, text="2. Análisis Individual y Muestreo")
         self.notebook.add(self.tab_tabla,      text="3. Tabla de Coincidencias")
-        self.notebook.add(self.tab_dashboard,  text="4. Visualizaciones Fourier") 
+        self.notebook.add(self.tab_dashboard,  text="4. Visualizaciones Fourier")
+        self.notebook.add(self.tab_detector,   text="5. Detector de Voz")  
 
         self.construir_tab_global()
         self.construir_tab_individual()
         self.construir_tab_tabla()
-        self.construir_tab_dashboard()  
+        self.construir_tab_dashboard()
+        self.construir_tab_detector()   
 
-    #  Tab 1 
 
     def construir_tab_global(self):
         fig, (ax1, ax2) = plt.subplots(2, 1, figsize=(10, 6),
@@ -133,8 +138,6 @@ class AnalizadorAudioApp:
         canvas = FigureCanvasTkAgg(fig, master=self.tab_global)
         canvas.draw()
         canvas.get_tk_widget().pack(fill=tk.BOTH, expand=True)
-
-    #  Tab 2 
 
     def construir_tab_individual(self):
         ctrl_frame = ttk.Frame(self.tab_individual, padding=10)
@@ -194,7 +197,6 @@ class AnalizadorAudioApp:
         self.fig_indiv.tight_layout()
         self.canvas_indiv.draw()
 
-    #  Tab 3 
 
     def construir_tab_tabla(self):
         columnas = ("Ventana", "Tiempo", "Similitud Temporal",
@@ -222,12 +224,7 @@ class AnalizadorAudioApp:
         self.tree.pack(fill=tk.BOTH, expand=True, padx=20, pady=20)
 
 
-
     def construir_tab_dashboard(self):
-        """
-        Pestaña nueva que muestra el PanelVisualizaciones completo:
-        forma de onda · espectro FFT · correlación cruzada · armónicos · métricas.
-        """
         panel = PanelVisualizaciones(
             parent     = self.tab_dashboard,
             audio_real = self.a_real,
@@ -235,5 +232,18 @@ class AnalizadorAudioApp:
             fs         = self.fs,
             n_max      = 10,
             tam_frame  = 2048,
+        )
+        panel.pack(fill=tk.BOTH, expand=True)
+
+
+    def construir_tab_detector(self):
+        """
+        Pestaña del detector: el usuario selecciona cualquier audio
+        y el sistema identifica quién habla (Messi/Cristiano) y si es
+        voz real o clonada por IA — sin saber de antemano cuál es cuál.
+        """
+        panel = TabDetector(
+            parent         = self.tab_detector,
+            carpeta_audios = config.AUDIOS_DIR,
         )
         panel.pack(fill=tk.BOTH, expand=True)
